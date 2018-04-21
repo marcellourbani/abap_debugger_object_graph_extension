@@ -6,7 +6,7 @@ ABAP debugger extension to visualize objects as graphs via [graphviz](http://www
 
 Install via [abapGit](https://github.com/larshp/abapGit)
 
-### Use
+Tested on netweaver 7.5, not sure about older releases
 
 ### Use
 
