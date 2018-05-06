@@ -22,16 +22,19 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 ********************************************************************************
-class zcl_debug_obj_to_graph definition
+class ZCL_DEBUG_OBJ_TO_GRAPH definition
   public
   final
   create public .
 
-  public section.
+public section.
 
-    methods export_graph_to_clipboard
-      importing
-        !name type string .
+  methods EXPORT_GRAPH_TO_CLIPBOARD
+    importing
+      !NAME type STRING .
+  methods DISPLAY_GRAPH
+    importing
+      !NAME type STRING .
   protected section.
   private section.
 
@@ -118,6 +121,37 @@ CLASS ZCL_DEBUG_OBJ_TO_GRAPH IMPLEMENTATION.
       }\}|.
 
     graph = mv_graph.
+  endmethod.
+
+
+  method display_graph.
+    data:viewer      type ref to cl_gui_html_viewer,
+         container   type ref to cl_gui_custom_container,
+         url(100000) type c,
+         lx_tpda     type ref to cx_tpda.
+
+    try.
+        if name is initial.
+          return.
+        endif.
+        create_graph( name ).
+
+        call function 'Z_DEBUG_GRAPH_VIEW_IFRAME'
+          exporting
+            graphtext =  mv_graph.
+
+*        create object viewer exporting parent = container.
+*        url = cl_http_utility=>escape_url( mv_graph ).
+*        concatenate 'http://localhost:3000?graphsource='  url into url.
+*
+*        viewer->detach_url_in_browser(  url ).
+
+      catch cx_tpda_varname.
+        message 'Unknown variable'(006) type 'I'.
+      catch cx_tpda into lx_tpda.
+        message lx_tpda type 'I'.
+    endtry.
+
   endmethod.
 
 

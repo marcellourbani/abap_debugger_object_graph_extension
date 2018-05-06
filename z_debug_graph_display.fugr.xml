@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <AREAT>display a graph</AREAT>
+   <INCLUDES>
+    <SOBJ_NAME>LZ_DEBUG_GRAPH_DISPLAYTOP</SOBJ_NAME>
+    <SOBJ_NAME>SAPLZ_DEBUG_GRAPH_DISPLAY</SOBJ_NAME>
+   </INCLUDES>
+   <FUNCTIONS>
+    <item>
+     <FUNCNAME>Z_DEBUG_GRAPH_DOWN_LAST</FUNCNAME>
+     <SHORT_TEXT>display a graph</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>FILE</PARAMETER>
+       <DEFAULT>&apos;/tmp/graph.html&apos;</DEFAULT>
+       <OPTIONAL>X</OPTIONAL>
+       <REFERENCE>X</REFERENCE>
+       <TYP>STRING</TYP>
+      </RSIMP>
+     </IMPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>FILE</PARAMETER>
+       <KIND>P</KIND>
+       <INDEX> 001</INDEX>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
+     <FUNCNAME>Z_DEBUG_GRAPH_VIEW</FUNCNAME>
+     <SHORT_TEXT>display a graph</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>GRAPHTEXT</PARAMETER>
+       <DEFAULT>&apos;digraph {aa -&gt; bb}&apos;</DEFAULT>
+       <OPTIONAL>X</OPTIONAL>
+       <REFERENCE>X</REFERENCE>
+       <TYP>STRING</TYP>
+      </RSIMP>
+     </IMPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>GRAPHTEXT</PARAMETER>
+       <KIND>P</KIND>
+       <INDEX> 001</INDEX>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
+     <FUNCNAME>Z_DEBUG_GRAPH_VIEW_IFRAME</FUNCNAME>
+     <SHORT_TEXT>display a graph</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>GRAPHTEXT</PARAMETER>
+       <DEFAULT>&apos;digraph {aa -&gt; bb}&apos;</DEFAULT>
+       <OPTIONAL>X</OPTIONAL>
+       <REFERENCE>X</REFERENCE>
+       <TYP>STRING</TYP>
+      </RSIMP>
+     </IMPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>GRAPHTEXT</PARAMETER>
+       <KIND>P</KIND>
+       <INDEX> 001</INDEX>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
+     <FUNCNAME>Z_DEBUG_GRAPH_VIEW_LAST_IFRAME</FUNCNAME>
+     <SHORT_TEXT>display a graph</SHORT_TEXT>
+    </item>
+   </FUNCTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
