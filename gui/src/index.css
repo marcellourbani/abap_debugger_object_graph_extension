@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+html,
+body,
+#app,
+#app > div,
+#root,
+#myGraph {
+  height: 100%;
+}
+svg {
+  height: 100%;
+  width: 100%;
+}
