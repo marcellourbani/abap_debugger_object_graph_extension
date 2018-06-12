@@ -1,16 +1,15 @@
 import React, { Component } from "react";
-import queryString from "query-string";
-import * as d3g from "d3-graphviz";
-import { MuiThemeProvider, createMuiTheme } from "material-ui/styles";
 import { BrowserRouter as Router, Route } from "react-router-dom";
-
-import { Button, Paper } from "material-ui";
+import { Button, Paper } from "@material-ui/core";
 import InputIcon from "@material-ui/icons/Input";
+
+import queryString from "./query-string";
+import GraphInputDialog from "./GraphInputDialog";
+import { Graph, EMPTYGRAPH } from "./Graph";
+
 import "./App.css";
 import PropTypes from "prop-types";
-import GraphInputDialog from "./GraphInputDialog";
 
-const theme = createMuiTheme();
 const paperstyle = {
   width: "100%",
   height: "100%",
@@ -26,25 +25,19 @@ const butstyle = {
 class Main extends Component {
   state = {
     open: false,
-    graph: "digraph {}"
+    graph: EMPTYGRAPH
   };
   graphviz;
   handleClickOpen = () => {
     this.setState({ open: true });
   };
-  renderGraph = () => {
-    if (!this.graphviz) this.graphviz = d3g.graphviz("#myGraph");
-    this.graphviz.renderDot(this.state.graph);
-  };
   dialogdone = (update, graph) => {
     this.setState({ open: false });
     if (update) {
+      if (graph === EMPTYGRAPH) this.graphviz = null;
       this.setState({ graph });
     }
   };
-  componentDidUpdate(prevProps, prevState) {
-    if (!prevState || prevState.graph !== this.state.graph) this.renderGraph();
-  }
 
   componentDidMount() {
     var graph = this.state.graph;
@@ -65,14 +58,12 @@ class Main extends Component {
     }
     if (graph && graph !== this.state.graph) {
       this.setState({ graph });
-    } else if (graph) {
-      this.renderGraph();
     }
   }
   render() {
     return (
       <Paper style={paperstyle}>
-        <div id="myGraph" />
+        <Graph graph={this.state.graph} />
 
         <Button
           variant="fab"
@@ -96,11 +87,9 @@ class Main extends Component {
 
 function App() {
   return (
-    <MuiThemeProvider theme={theme}>
-      <Router>
-        <Route path="/" component={Main} />
-      </Router>
-    </MuiThemeProvider>
+    <Router>
+      <Route path="/" component={Main} />
+    </Router>
   );
 }
 

@@ -1,11 +1,12 @@
 import React from "react";
-import { Button, TextField } from "material-ui";
-import Dialog, {
+import { Button, TextField } from "@material-ui/core";
+import {
+  Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle
-} from "material-ui/Dialog";
+} from "@material-ui/core";
 
 const GraphInputDialog = ({ openstate, done, graphsource }) => {
   var source = graphsource;
@@ -19,7 +20,7 @@ const GraphInputDialog = ({ openstate, done, graphsource }) => {
     source = event.target.value;
   };
   return (
-    <Dialog open={openstate}>
+    <Dialog open={openstate} fullWidth={true}>
       <DialogTitle id="form-dialog-title">Enter Graph</DialogTitle>
       <DialogContent>
         <DialogContentText>
