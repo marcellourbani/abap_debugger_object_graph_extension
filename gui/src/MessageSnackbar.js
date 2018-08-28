@@ -27,7 +27,6 @@ export const MessageSnackbar = ({ message, isopen, close }) => {
           key="close"
           aria-label="Close"
           color="inherit"
-          //   className={classes.close}
           onClick={handleClose}
         >
           <CloseIcon />

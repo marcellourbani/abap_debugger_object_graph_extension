@@ -9,19 +9,26 @@ export class Graph extends Component {
     open: false,
     message: ""
   };
+  lastrendered = false;
   renderGraph() {
     if (this.props.graph !== EMPTYGRAPH) {
       if (!this.graphviz) this.graphviz = d3g.graphviz("#myGraph");
       try {
         this.graphviz.renderDot(this.props.graph);
+        this.lastrendered = true;
       } catch (exception) {
+        this.lastrendered = false;
         this.setState({ open: true, message: "Invalid graph source" });
       }
     }
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.graph !== this.props.graph) this.renderGraph();
+    if (
+      prevProps.graph !== this.props.graph ||
+      (prevProps.graphversion !== this.props.graphversion && !this.lastrendered)
+    )
+      this.renderGraph();
   }
   componentDidMount() {
     this.renderGraph();
@@ -38,7 +45,8 @@ export class Graph extends Component {
           isopen={this.state.open}
           message={this.state.message}
           close={() => this.setState({ open: false })}
-        />;
+        />
+        ;
       </div>
     );
   }

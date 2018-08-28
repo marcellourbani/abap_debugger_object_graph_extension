@@ -25,6 +25,7 @@ const butstyle = {
 class Main extends Component {
   state = {
     open: false,
+    graphversion: 0,
     graph: EMPTYGRAPH
   };
   graphviz;
@@ -35,7 +36,7 @@ class Main extends Component {
     this.setState({ open: false });
     if (update) {
       if (graph === EMPTYGRAPH) this.graphviz = null;
-      this.setState({ graph });
+      this.setState({ graph, graphversion: this.state.graphversion + 1 });
     }
   };
 
@@ -63,7 +64,10 @@ class Main extends Component {
   render() {
     return (
       <Paper style={paperstyle}>
-        <Graph graph={this.state.graph} />
+        <Graph
+          graph={this.state.graph}
+          graphversion={this.state.graphversion}
+        />
 
         <Button
           variant="fab"
