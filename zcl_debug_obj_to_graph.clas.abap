@@ -587,31 +587,20 @@ class zcl_debug_obj_to_graph implementation.
       exceptions
         others               = 4 ).
     if sy-subrc = 0.
-      if separator = '/'.
-        cl_gui_frontend_services=>get_temp_directory(
-           changing
-             temp_dir             =  tempdir
-           exceptions
-             cntl_error           = 1
-             error_no_gui         = 2
-             not_supported_by_gui = 3
-             others               = 4 ).
-      else.
-        cl_gui_frontend_services=>registry_get_value(
-          exporting
-            root                 = cl_gui_frontend_services=>hkey_current_user
-            key                  =
-                                   'Software\SAP\SAPGUI Front\SAP Frontend Server\Filetransfer'
-            value                = 'PathDownload'
-          importing
-            reg_value            = tempdir
-          exceptions
-            get_regvalue_failed  = 1
-            cntl_error           = 2
-            error_no_gui         = 3
-            not_supported_by_gui = 4
-            others               = 5 ).
-      endif.
+      cl_gui_frontend_services=>registry_get_value(
+        exporting
+          root                 = cl_gui_frontend_services=>hkey_current_user
+          key                  =
+                                 'Software\SAP\SAPGUI Front\SAP Frontend Server\Filetransfer'
+          value                = 'PathDownload'
+        importing
+          reg_value            = tempdir
+        exceptions
+          get_regvalue_failed  = 1
+          cntl_error           = 2
+          error_no_gui         = 3
+          not_supported_by_gui = 4
+          others               = 5 ).
     endif.
     if sy-subrc = 0.
       call function 'GUID_CREATE'
