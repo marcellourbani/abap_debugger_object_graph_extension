@@ -147,7 +147,7 @@ class zcl_debug_obj_to_graph implementation.
           return.
         endif.
         create_graph( name ).
-        contents = createhtmlwrapper( baseurl = 'http://192.168.1.46:3000/' ).
+        contents = createhtmlwrapper( baseurl = 'https://marcellourbani.github.io/Graphviz-browser/index.html#/graph' ).
         append contents to itab.
 
         url = get_temp_file_url( ).
@@ -517,7 +517,7 @@ class zcl_debug_obj_to_graph implementation.
 
     split graph at cl_abap_char_utilities=>newline into table graphlines.
 
-    concatenate  '<iframe src="' baseurl '#?useparentsource=true">' into iframe.
+    concatenate  '<iframe src="' baseurl '?useparentsource=true">' into iframe.
 
     append:
   '<!DOCTYPE html>' to lines,
