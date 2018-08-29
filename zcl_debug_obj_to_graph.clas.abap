@@ -108,6 +108,9 @@ class zcl_debug_obj_to_graph definition public  final  create public .
     methods get_temp_file_url
       returning
         value(r_result) type string.
+    methods comment
+      importing
+        i_text type string.
 
 endclass.
 
@@ -135,25 +138,23 @@ class zcl_debug_obj_to_graph implementation.
   method display_graph.
     data: viewer    type ref to cl_gui_html_viewer,
           container type ref to cl_gui_custom_container,
-          url(400)  type c,
+          url       type string,
           lx_root   type ref to cx_root,
           contents  type string,
-          itab      type table of string,
-          filename  type string.
+          itab      type table of string.
     try.
         if name is initial.
           return.
         endif.
         create_graph( name ).
-        contents = createhtmlwrapper( baseurl = 'http://192.168.1.46:3000' ).
+        contents = createhtmlwrapper( baseurl = 'http://192.168.1.46:3000/' ).
         append contents to itab.
 
         url = get_temp_file_url( ).
         if url <>  ''.
-          filename = url.
           call function 'GUI_DOWNLOAD'
             exporting
-              filename = filename
+              filename = url
             tables
               data_tab = itab
             exceptions
@@ -164,22 +165,26 @@ class zcl_debug_obj_to_graph implementation.
           return.
         endif.
 
-        create object viewer exporting parent = container.
-        viewer->detach_url_in_browser(  url ).
+        call method cl_gui_frontend_services=>execute
+          exporting
+            document               = url
+            operation              = ' '
+          exceptions
+            file_extension_unknown = 1
+            file_not_found         = 2
+            path_not_found         = 3
+            error_execute_failed   = 4
+            error_no_gui           = 6
+            others                 = 7.
+        if sy-subrc <> 0.
+          message 'Failed to open URL'  type 'I'.
+        endif.
 
       catch cx_tpda_varname.
         message 'Unknown variable'(006) type 'I'.
       catch cx_root into lx_root.
         message lx_root type 'I'.
     endtry.
-
-    call function 'GUI_DOWNLOAD'
-      exporting
-        filename = '/tmp/visited'
-      tables
-        data_tab = mt_visited
-      exceptions
-        others   = 22.
 
   endmethod.
 
@@ -248,14 +253,15 @@ class zcl_debug_obj_to_graph implementation.
 
 
   method handle_dataref.
-    data: ls_info    type tpda_scr_quick_info.
+    data: ls_info type tpda_scr_quick_info.
 
     field-symbols: <ls_symobjref> type tpda_sys_symbdatref.
 
     ls_info = cl_tpda_script_data_descr=>get_quick_info( iv_name ).
     assign ls_info-quickdata->* to <ls_symobjref>.
 
-    if <ls_symobjref>-instancename <> '{O:initial}'.
+    find regex '^\{[A-Z]:initial\}$' in <ls_symobjref>-instancename ignoring case.
+    if sy-subrc <> 0.
       handle( <ls_symobjref>-instancename ).
     endif.
 
@@ -263,7 +269,6 @@ class zcl_debug_obj_to_graph implementation.
       }label = "ref"{ c_newline
       }shape = "record" ];{ c_newline
       }"{ name( iv_name ) }" -> "{ name( <ls_symobjref>-instancename ) }";{ c_newline }|.
-
 
   endmethod.
 
@@ -417,7 +422,6 @@ class zcl_debug_obj_to_graph implementation.
       else.
         lv_name = |{ iv_name(lv_match_offset) }{ <ls_component>-compname }|.
       endif.
-*      concatenate removestar( iv_name ) '-' <ls_component>-compname into lv_name.
       lv_edges = |{ lv_edges }"{ name( iv_name ) }":<f{ sy-tabix
         }> -> "{ name( lv_name ) }";{ c_newline }|.
 
@@ -513,7 +517,7 @@ class zcl_debug_obj_to_graph implementation.
 
     split graph at cl_abap_char_utilities=>newline into table graphlines.
 
-    concatenate  '<iframe src="' baseurl '?useparentsource=true">' into iframe.
+    concatenate  '<iframe src="' baseurl '#?useparentsource=true">' into iframe.
 
     append:
   '<!DOCTYPE html>' to lines,
@@ -577,30 +581,59 @@ class zcl_debug_obj_to_graph implementation.
           tempdir   type string,
           guid      type guid_32.
 
-    cl_gui_frontend_services=>get_temp_directory(
+    cl_gui_frontend_services=>get_file_separator(
       changing
-        temp_dir             =  tempdir
+        file_separator       = separator
       exceptions
-        cntl_error           = 1
-        error_no_gui         = 2
-        not_supported_by_gui = 3
         others               = 4 ).
     if sy-subrc = 0.
-      cl_gui_frontend_services=>get_file_separator(
-        changing
-          file_separator       = separator
-        exceptions
-          others               = 4 ).
+      if separator = '/'.
+        cl_gui_frontend_services=>get_temp_directory(
+           changing
+             temp_dir             =  tempdir
+           exceptions
+             cntl_error           = 1
+             error_no_gui         = 2
+             not_supported_by_gui = 3
+             others               = 4 ).
+      else.
+        cl_gui_frontend_services=>registry_get_value(
+          exporting
+            root                 = cl_gui_frontend_services=>hkey_current_user
+            key                  =
+                                   'Software\SAP\SAPGUI Front\SAP Frontend Server\Filetransfer'
+            value                = 'PathDownload'
+          importing
+            reg_value            = tempdir
+          exceptions
+            get_regvalue_failed  = 1
+            cntl_error           = 2
+            error_no_gui         = 3
+            not_supported_by_gui = 4
+            others               = 5 ).
+      endif.
     endif.
-
     if sy-subrc = 0.
       call function 'GUID_CREATE'
         importing
           ev_guid_32 = guid.
 
-      r_result = |{ tempdir }{ separator }{ guid }.html|.
+      if tempdir is initial.
+
+        concatenate guid '.html' into r_result.
+
+      else.
+
+        concatenate tempdir separator guid '.html' into r_result.
+
+      endif.
     endif.
 
+  endmethod.
+
+
+  method comment.
+    mv_graph = |{ mv_graph }{ c_newline }//comment:{ i_text } { c_newline }|.
   endmethod.
 
 endclass.
