@@ -1,4 +1,4 @@
-# abap_debugger_object_graph_extension
+# Abap debugger object graph extension
 
 ABAP debugger extension to visualize objects as graphs via [graphviz](http://www.graphviz.org/)
 

@@ -5,8 +5,7 @@ body {
 }
 html,
 body,
-#app,
-#app > div,
+div.full,
 #root,
 #myGraph {
   height: 100%;

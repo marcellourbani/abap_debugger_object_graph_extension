@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
-import { Button, Paper } from "@material-ui/core";
+import { HashRouter as Router, Route, Link } from "react-router-dom";
+import { Button } from "@material-ui/core";
 import InputIcon from "@material-ui/icons/Input";
 
 import queryString from "./query-string";
@@ -10,19 +10,13 @@ import { Graph, EMPTYGRAPH } from "./Graph";
 import "./App.css";
 import PropTypes from "prop-types";
 
-const paperstyle = {
-  width: "100%",
-  height: "100%",
-  margin: 0,
-  minHeight: "100%"
-};
 const butstyle = {
   right: 20,
   top: 20,
   position: "fixed"
 };
 
-class Main extends Component {
+class MainGraph extends Component {
   state = {
     open: false,
     graphversion: 0,
@@ -63,7 +57,7 @@ class Main extends Component {
   }
   render() {
     return (
-      <Paper style={paperstyle}>
+      <div className="full">
         <Graph
           graph={this.state.graph}
           graphversion={this.state.graphversion}
@@ -84,15 +78,34 @@ class Main extends Component {
           done={this.dialogdone}
           graphsource={this.state.graph}
         />
-      </Paper>
+      </div>
     );
   }
+}
+function Main() {
+  return (
+    <div>
+      <h1>Graphviz browser</h1>
+      This is a simple <a href="http://www.graphviz.org/">graphviz</a> browser
+      developed for&nbsp;
+      <a href="https://github.com/marcellourbani/abap_debugger_object_graph_extension">
+        Abap debugger object graph extension
+      </a>
+      , which includes the sources for this page.
+      <br />
+      <br />
+      <Link to="/graph">Click here for the actual graph browser</Link>
+    </div>
+  );
 }
 
 function App() {
   return (
     <Router>
-      <Route path="/" component={Main} />
+      <div className="full">
+        <Route path="/" component={Main} exact={true} />
+        <Route path="/graph" component={MainGraph} exact={true} />
+      </div>
     </Router>
   );
 }
