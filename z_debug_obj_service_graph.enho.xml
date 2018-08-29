@@ -46,7 +46,7 @@
       <item>if zzl_node_key = &apos;ZOBJEXPORTGR&apos;.</item>
       <item>try.</item>
       <item>create object zdebgr.</item>
-      <item>zdebgr-&gt;EXPORT_GRAPH_TO_CLIPBOARD( dynp_vars-object_name_real   ).</item>
+      <item>zdebgr-&gt;display_graph( dynp_vars-object_name_real   ).</item>
       <item>catch cx_sy_no_handler into zz_exception .</item>
       <item>message zz_exception-&gt;previous  type &apos;I&apos;.</item>
       <item>catch cx_root into zz_exception .</item>
