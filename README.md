@@ -20,3 +20,5 @@ The object graph will be shown in a new browser window (Example from http://zevo
 ![image](https://user-images.githubusercontent.com/2453277/44873836-37ba6d00-ac91-11e8-9ea8-998b8dbb3d26.png)
 
 Based on [ABAP-Object-Visualizer](https://github.com/larshp/ABAP-Object-Visualizer)
+
+Uses [Graphviz-browser](https://github.com/marcellourbani/Graphviz-browser) to render the graph
