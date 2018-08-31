@@ -2,7 +2,6 @@
 * The MIT License (MIT)
 *
 * Copyright (c) 2018 Marcello Urbani
-* Copyright (c) 2015 Lars Hvam Petersen
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -165,7 +164,7 @@ class zcl_debug_obj_to_graph implementation.
           return.
         endif.
 
-        call method cl_gui_frontend_services=>execute
+        cl_gui_frontend_services=>execute(
           exporting
             document               = url
             operation              = ' '
@@ -175,7 +174,7 @@ class zcl_debug_obj_to_graph implementation.
             path_not_found         = 3
             error_execute_failed   = 4
             error_no_gui           = 6
-            others                 = 7.
+            others                 = 7 ).
         if sy-subrc <> 0.
           message 'Failed to open URL'  type 'I'.
         endif.
