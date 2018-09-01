@@ -39,6 +39,8 @@ class zcl_debug_obj_to_graph definition public  final  create public .
     data:
       mt_visited    type table of string.
     data mv_graph type string.
+    data uploadpath type string.
+    data downloadpath type string.
 
     methods to_clipboard .
     methods name
@@ -577,7 +579,6 @@ class zcl_debug_obj_to_graph implementation.
 
   method get_temp_file_url.
     data: separator type c,
-          tempdir   type string,
           guid      type guid_32.
 
     cl_gui_frontend_services=>get_file_separator(
@@ -586,33 +587,26 @@ class zcl_debug_obj_to_graph implementation.
       exceptions
         others               = 4 ).
     if sy-subrc = 0.
-      cl_gui_frontend_services=>registry_get_value(
-        exporting
-          root                 = cl_gui_frontend_services=>hkey_current_user
-          key                  =
-                                 'Software\SAP\SAPGUI Front\SAP Frontend Server\Filetransfer'
-          value                = 'PathDownload'
-        importing
-          reg_value            = tempdir
+      "will not work with local variables...
+      cl_gui_frontend_services=>get_upload_download_path(
+        changing
+          upload_path                 =  uploadpath
+          download_path               =  downloadpath
         exceptions
-          get_regvalue_failed  = 1
-          cntl_error           = 2
-          error_no_gui         = 3
-          not_supported_by_gui = 4
-          others               = 5 ).
+          others                      = 6 ).
     endif.
     if sy-subrc = 0.
       call function 'GUID_CREATE'
         importing
           ev_guid_32 = guid.
 
-      if tempdir is initial.
+      if downloadpath is initial.
 
         concatenate guid '.html' into r_result.
 
       else.
 
-        concatenate tempdir separator guid '.html' into r_result.
+        concatenate downloadpath separator guid '.html' into r_result.
 
       endif.
     endif.
