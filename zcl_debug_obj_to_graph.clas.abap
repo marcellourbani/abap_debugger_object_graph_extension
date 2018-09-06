@@ -51,7 +51,6 @@ class zcl_debug_obj_to_graph definition public  final  create public .
     methods handle_dataref
       importing
         !iv_name  type string
-        !io_descr type ref to cl_tpda_script_data_descr
       raising
         cx_tpda .
     methods handle_tab
@@ -147,39 +146,42 @@ class zcl_debug_obj_to_graph implementation.
         if name is initial.
           return.
         endif.
-        create_graph( name ).
-        contents = createhtmlwrapper( baseurl = 'https://marcellourbani.github.io/Graphviz-browser/index.html#/graph' ).
-        append contents to itab.
-
-        url = get_temp_file_url( ).
-        if url <>  ''.
-          call function 'GUI_DOWNLOAD'
-            exporting
-              filename = url
-            tables
-              data_tab = itab
-            exceptions
-              others   = 22.
-        endif.
-        if sy-subrc <> 0 or url = ''.
-          message 'Error writing graph file' type 'I'.
-          return.
-        endif.
-
-        cl_gui_frontend_services=>execute(
-          exporting
-            document               = url
-            operation              = ' '
-          exceptions
-            file_extension_unknown = 1
-            file_not_found         = 2
-            path_not_found         = 3
-            error_execute_failed   = 4
-            error_no_gui           = 6
-            others                 = 7 ).
-        if sy-subrc <> 0.
-          message 'Failed to open URL'  type 'I'.
-        endif.
+        data(factory) = zcl_debug_obj_graph_factory=>create( ).
+        data(graph)   = factory->create_graph( name ).
+        zcl_abap_graph_utilities=>show_in_browser( graph = graph comments = factory->logs ).
+*        create_graph( name ).
+*      contents = createhtmlwrapper( baseurl = 'https://marcellourbani.github.io/Graphviz-browser/index.html#/graph' ).
+*        append contents to itab.
+*
+*        url = get_temp_file_url( ).
+*        if url <>  ''.
+*          call function 'GUI_DOWNLOAD'
+*            exporting
+*              filename = url
+*            tables
+*              data_tab = itab
+*            exceptions
+*              others   = 22.
+*        endif.
+*        if sy-subrc <> 0 or url = ''.
+*          message 'Error writing graph file' type 'I'.
+*          return.
+*        endif.
+*
+*        cl_gui_frontend_services=>execute(
+*          exporting
+*            document               = url
+*            operation              = ' '
+*          exceptions
+*            file_extension_unknown = 1
+*            file_not_found         = 2
+*            path_not_found         = 3
+*            error_execute_failed   = 4
+*            error_no_gui           = 6
+*            others                 = 7 ).
+*        if sy-subrc <> 0.
+*          message 'Failed to open URL'  type 'I'.
+*        endif.
 
       catch cx_tpda_varname.
         message 'Unknown variable'(006) type 'I'.
@@ -238,8 +240,7 @@ class zcl_debug_obj_to_graph implementation.
             handle_tab( iv_name  = iv_name
                         io_descr = lo_descr ).
           when cl_tpda_script_data_descr=>mt_datref.
-            handle_dataref( iv_name  = iv_name
-                            io_descr = lo_descr ).
+            handle_dataref( iv_name  = iv_name ).
           when cl_tpda_script_data_descr=>mt_object.
             handle_object( iv_name  = iv_name
                            io_descr = lo_descr ).
