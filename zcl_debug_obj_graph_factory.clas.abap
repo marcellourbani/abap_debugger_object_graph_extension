@@ -11,11 +11,20 @@ class zcl_debug_obj_graph_factory definition public final create public .
           logs          type string read-only.
 
   private section.
-    types: begin of ty_data_desc,
+    constants: c_headerbg    type string value 'lavender',
+               c_privatebg   type string value 'lightsalmon',
+               c_protectedbg type string value 'khaki'.
+
+    types: begin of ty_type_desc,
+             name  type string,
+             local type abap_bool,
+           end of ty_type_desc,
+           begin of ty_data_desc,
              name          type string,
              descr         type ref to cl_tpda_script_data_descr,
              refname       type string,
              valuetext     type string,
+             typedesc      type ty_type_desc,
              metatype      type tpda_scr_quick_info-metatype,
              hascomponents type abap_bool,
              istable       type abap_bool,
@@ -24,16 +33,21 @@ class zcl_debug_obj_graph_factory definition public final create public .
            end of ty_data_desc,
            begin of ty_component,
              compname   type string,
-             visibility type string,
              value      type string,
              desc       type ty_data_desc,
+             visibility type i,
            end of ty_component,
            tt_component type table of ty_component with default key.
 
+    constants: c_public    type i value 0,
+               c_protected type i value 1,
+               c_private   type i value 2,
+               c_dummy     type string value 'DUMMY'.
     data: graph      type ref to zcl_abap_graph.
 
     methods create_node_new importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
                             returning value(node) type ref to zif_abap_graph_node.
+
     methods get_or_create_node importing name          type string
                                returning value(nodeid) type string.
 
@@ -47,39 +61,52 @@ class zcl_debug_obj_graph_factory definition public final create public .
     methods get_data_desc importing name        type string
                           returning value(desc) type ty_data_desc.
 
-    methods create_table_node
-      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
-      returning value(node) type ref to zif_abap_graph_node.
+    methods create_table_node      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
+                                   returning value(node) type ref to zif_abap_graph_node.
 
-    methods create_record_node
-      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
-      returning value(node) type ref to zif_abap_graph_node.
+    methods create_record_node      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
+                                    returning value(node) type ref to zif_abap_graph_node.
 
-    methods create_simple_node
-      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
-      returning value(node) type ref to zif_abap_graph_node.
-    methods get_components
-      importing desc              type zcl_debug_obj_graph_factory=>ty_data_desc
-      returning value(components) type zcl_debug_obj_graph_factory=>tt_component.
-    methods log
-      importing
-        entry type string.
-    methods add_record_component
-      importing
-                record             type ref to zcl_abap_graph_node_record
-                component          type zcl_debug_obj_graph_factory=>ty_component
-      returning value(componentid) type string.
-    methods get_comp_value
-      importing
-        i_component     type zcl_debug_obj_graph_factory=>ty_component
-      returning
-        value(r_result) type string.
-    methods decode_visibility
-      importing
-        acckind         type i
-      returning
-        value(r_result) type string.
+    methods create_simple_node      importing desc        type zcl_debug_obj_graph_factory=>ty_data_desc
+                                    returning value(node) type ref to zif_abap_graph_node.
 
+    methods get_components      importing desc              type zcl_debug_obj_graph_factory=>ty_data_desc
+                                returning value(components) type zcl_debug_obj_graph_factory=>tt_component.
+
+    methods log      importing  entry type string.
+
+    methods add_record_component importing record             type ref to zcl_abap_graph_node_record
+                                           component          type zcl_debug_obj_graph_factory=>ty_component
+                                 returning value(componentid) type string.
+
+    methods get_value    importing desc            type ty_data_desc
+                         returning value(r_result) type string.
+
+    methods get_head_label    importing desc            type ty_data_desc
+                              returning value(r_result) type string.
+
+    methods decode_visibility importing acckind         type i
+                              returning value(r_result) type i.
+
+    methods decodetype importing typename  type string
+                                 desc      type ty_data_desc
+                       returning value(td) type ty_type_desc.
+
+    methods viscolor   importing visibility      type i
+                       returning value(r_result) type string.
+
+    methods bold       importing base            type string
+                       returning value(r_result) type string.
+
+    methods italics    importing base            type string
+                       returning value(r_result) type string.
+    methods underline  importing base            type string
+                       returning value(r_result) type string.
+    methods add_table_cell importing table              type ref to zcl_abap_graph_node_table
+                                     desc               type zcl_debug_obj_graph_factory=>ty_data_desc
+                                     line               type i
+                                     value(compname)    type string
+                           returning value(componentid) type string.
 
 endclass.
 
@@ -103,7 +130,11 @@ class zcl_debug_obj_graph_factory implementation.
 
     desc = get_data_desc( root ).
 
-    create_node_new( desc ).
+    if desc is initial.
+      message 'Variable not found' type 'S'.
+    else.
+      create_node_new( desc ).
+    endif.
 
   endmethod.
 
@@ -112,13 +143,14 @@ class zcl_debug_obj_graph_factory implementation.
   endmethod.
 
   method escapevalue.
-    escaped = original.
+    escaped = cl_http_utility=>escape_html( original ).
   endmethod.
 
   method get_data_desc.
     data: elem   type ref to cl_tpda_script_elemdescr,
           string type ref to cl_tpda_script_stringdescr,
           table  type ref to cl_tpda_script_tabledescr,
+          odesc  type ref to cl_tpda_script_objectdescr,
           info   type tpda_scr_quick_info,
           ex     type ref to cx_root.
 
@@ -126,7 +158,6 @@ class zcl_debug_obj_graph_factory implementation.
                    <symobjref>  type tpda_sys_symbobjref.
 
     desc-name = name.
-    desc-valuetext = '<s>UNKNOWN</s>'.
 
     try.
         desc-descr = cl_tpda_script_data_descr=>factory( name ).
@@ -142,7 +173,8 @@ class zcl_debug_obj_graph_factory implementation.
             desc-valuetext = elem->value( ).
             desc-valuetext = cl_http_utility=>escape_html( desc-valuetext ).
           when cl_tpda_script_data_descr=>mt_struct.
-            desc-valuetext = '&lt;structure&gt;'.
+            "            desc-valuetext = cl_http_utility=>escape_html( info-abstypename ).
+            desc-typedesc = decodetype( typename = info-abstypename desc = desc ).
             desc-hascomponents = abap_true.
             desc-haschildren = abap_true.
             desc-refname = name.
@@ -151,11 +183,12 @@ class zcl_debug_obj_graph_factory implementation.
             if table->linecnt( ) > 0.
               desc-haschildren = abap_true.
               desc-istable = abap_true.
-              desc-valuetext = '&lt;table&gt;'.
+              desc-valuetext = '<table>'.
               desc-refname = name.
             else.
-              desc-valuetext = '&lt;emptytable&gt;'.
+              desc-valuetext = '<emptytable>'.
             endif.
+            desc-typedesc = decodetype( typename = info-abstypename desc = desc ).
           when cl_tpda_script_data_descr=>mt_datref.
             assign info-quickdata->* to <symdataref>.
             find regex '^\{[A-Z]:initial\}$' in <symdataref>-instancename ignoring case.
@@ -163,26 +196,29 @@ class zcl_debug_obj_graph_factory implementation.
             if sy-subrc <> 0.
               desc-haschildren = abap_true.
               desc-refname = <symdataref>-instancename.
-              desc-valuetext = '&lt;reference&gt;'.
+              desc-valuetext = '<reference>'.
             else.
-              desc-valuetext = '&lt;null reference&gt;'.
+              desc-valuetext = '<null reference>'.
             endif.
           when cl_tpda_script_data_descr=>mt_object.
-            desc-valuetext = '&lt;object&gt;'.
             desc-haschildren = abap_true.
             desc-hascomponents = abap_true.
+            odesc ?= desc-descr.
+            desc-valuetext = odesc->classname( ).
+            desc-typedesc = decodetype( typename = desc-valuetext desc = desc ).
           when cl_tpda_script_data_descr=>mt_objref.
             assign info-quickdata->* to <symobjref>.
             if <symobjref>-instancename <> '{O:initial}'.
               desc-haschildren = abap_true.
               desc-refname = <symobjref>-instancename.
-              desc-valuetext = '&lt;object_ref&gt;'.
+              desc-valuetext = '<object_ref>'.
             else.
-              desc-valuetext = '&lt;null object_ref&gt;'.
+              desc-valuetext = '<null object_ref>'.
             endif.
             desc-isreference = abap_true.
         endcase.
       catch cx_root into ex.
+        clear desc.
         log( |get_data_desc exception { ex->get_text( ) } | ).
     endtry.
 
@@ -201,62 +237,59 @@ class zcl_debug_obj_graph_factory implementation.
   endmethod.
 
   method create_table_node.
-    data: value       type string,
-          id          type string,
-          linkedid    type string,
-          components  type tt_component,
-          partid      type string,
-          componentid type string,
-          tabdesc     type ref to cl_tpda_script_tabledescr,
-          table       type ref to zcl_abap_graph_node_table,
-          linename    type string,
-          line        type i,
-          linedesc    type zcl_debug_obj_graph_factory=>ty_data_desc,
-          ex          type ref to cx_root.
+    data: value      type string,
+          id         type string,
+          components type tt_component,
+          tabdesc    type ref to cl_tpda_script_tabledescr,
+          table      type ref to zcl_abap_graph_node_table,
+          linename   type string,
+          line       type i,
+          linedesc   type zcl_debug_obj_graph_factory=>ty_data_desc,
+          ex         type ref to cx_root.
     field-symbols: <component> like line of components.
 
 
     try.
         tabdesc ?= desc-descr.
-        value = escapevalue( desc-valuetext ).
         id = desc-name.
-        node = table = zcl_abap_graph_node_table=>create( graph = graph id = id label = value escape = abap_false ).
+        value = get_head_label( desc ).
+        log( |table { id }__{ value }| ).
+        node = table = zcl_abap_graph_node_table=>create( graph = graph
+                                                          id = id
+                                                          label = value
+                                                          escape = abap_false ).
+        table->headerattr->set( name = 'bgcolor' value = c_headerbg ).
+        table->titleattr->set( name = 'bgcolor' value = c_headerbg ).
 
-        "header - use dummy components without data
-        components = get_components( desc ).
-        loop at components assigning <component>.
-          table->setcolumn( id = <component>-compname name = <component>-compname ).
-        endloop.
         do tabdesc->linecnt( ) times.
           line = sy-index.
+          log( | table line { line } | ).
           linename = |{ desc-name }[{ line }]|.
           linedesc = get_data_desc( linename ).
-
-          "actual components of a line
-          components = get_components( linedesc ).
-          loop at components assigning <component>.
-            value = escapevalue( <component>-desc-valuetext ).
-
-            if <component>-desc-refname <> ''.
-              partid = |l{ line }c{ <component>-compname }|.
-            else.
-              partid = ''.
-            endif.
-
-            componentid = table->setcell(
-                columnid    = <component>-compname
-                row         = line
-                value       = value
-                partid      = partid ).
-
-            if <component>-desc-refname <> ''.
-              linkedid = get_or_create_node( desc-refname ).
-              if linkedid <> ''.
-                node->linkto( destination = linkedid source = componentid ).
+          if line = 1 or not components is initial.
+            components = get_components( linedesc ).
+            if line = 1.
+              "header
+              if components is initial.
+                table->setcolumn( id = c_dummy ).
+              else.
+                loop at components assigning <component>.
+                  value = escapevalue( <component>-compname ).
+                  value = bold( value ).
+                  table->setcolumn( id = <component>-compname name = value ).
+                endloop.
               endif.
             endif.
+          endif.
 
-          endloop.
+          if components is initial.
+            add_table_cell( table = table line = line desc = linedesc compname = '' ).
+          else.
+            "actual components of a line
+            loop at components assigning <component>.
+              add_table_cell( table = table line = line desc = <component>-desc  compname = <component>-compname ).
+            endloop.
+          endif.
         enddo.
       catch cx_root into ex.
         log( |create_table_node exception { ex->get_text( ) } | ).
@@ -277,9 +310,10 @@ class zcl_debug_obj_graph_factory implementation.
     try.
         components = get_components( desc ).
 
-        value = escapevalue( desc-valuetext ).
+        value = get_head_label( desc ).
         id = desc-name .
         node = record = zcl_abap_graph_node_record=>create( graph = graph id = id label = value escape = abap_false ).
+        record->headerattr->set( name = 'bgcolor' value = c_headerbg ).
 
         loop at components assigning <component>.
           componentid = add_record_component( record = record component = <component> ).
@@ -302,7 +336,7 @@ class zcl_debug_obj_graph_factory implementation.
           id       type string,
           linkedid type string.
 
-    value = escapevalue( desc-valuetext ).
+    value = desc-valuetext.
     id =  desc-name .
     node = zcl_abap_graph_node_simple=>create( graph = graph id = id label = value ).
 
@@ -324,38 +358,36 @@ class zcl_debug_obj_graph_factory implementation.
           scomponents   type tpda_script_struc_componentsit,
           refname       type string,
           match_offset  type i,
-          tabcomps      type tpda_scr_table_comp_it,
           ex            type ref to cx_root,
           basename      type string.
     field-symbols: <scomponent> like line of scomponents,
                    <component>  like line of components,
-                   <attribute>  like line of objattributes,
-                   <tabcomp>    like line of tabcomps.
+                   <attribute>  like line of objattributes.
     try.
 
-        if desc-metatype = cl_tpda_script_data_descr=>mt_object.
-          odesc ?= desc-descr.
-          objattributes = odesc->attributes( ).
-
-        elseif desc-metatype = cl_tpda_script_data_descr=>mt_struct."struct
-          sdesc ?= desc-descr.
-          sdesc->components( importing p_components_it = scomponents ).
-          find regex '\*$' in desc-name match offset match_offset.
-          if match_offset = 0.
-            basename = desc-name.
-          else.
-            basename = desc-name(match_offset).
-          endif.
-          basename = desc-name.
-        elseif desc-metatype = cl_tpda_script_data_descr=>mt_tab.
-          tdesc ?= desc-descr.
-          if tdesc->linecnt( ) > 0.
-            log( |get_components probable casting exception after this line | ).
-            sdesc ?= tdesc->get_line_handle( 1 ).
+        case desc-metatype.
+          when cl_tpda_script_data_descr=>mt_object.
+            odesc ?= desc-descr.
+            objattributes = odesc->attributes( ).
+          when cl_tpda_script_data_descr=>mt_struct."struct
+            sdesc ?= desc-descr.
             sdesc->components( importing p_components_it = scomponents ).
-            concatenate desc-name '[1]'  into  basename.
-          endif.
-        endif.
+            find regex '\*$' in desc-name match offset match_offset.
+            if match_offset = 0.
+              basename = desc-name.
+            else.
+              basename = desc-name(match_offset).
+            endif.
+            basename = desc-name.
+          when cl_tpda_script_data_descr=>mt_tab.
+            tdesc ?= desc-descr.
+            if tdesc->linecnt( ) > 0.
+              log( |get_components probable casting exception after this line | ).
+              sdesc ?= tdesc->get_line_handle( 1 ).
+              sdesc->components( importing p_components_it = scomponents ).
+              concatenate desc-name '[1]'  into  basename.
+            endif.
+        endcase.
 
         loop at objattributes assigning <attribute>.
           append initial line to components assigning <component>.
@@ -363,22 +395,24 @@ class zcl_debug_obj_graph_factory implementation.
           concatenate desc-name '-'  <attribute>-name into refname.
           <component>-desc = get_data_desc( refname ).
           <component>-visibility = decode_visibility( <attribute>-acckind ).
-          <component>-value = get_comp_value( <component> ).
+          <component>-value = get_value( <component>-desc ).
         endloop.
 
         loop at scomponents assigning <scomponent>.
           append initial line to components assigning <component>.
           <component>-compname = <scomponent>-compname.
-          <component>-visibility = zcl_abap_graph_node_record=>vispublic.
+          <component>-visibility = c_public.
           concatenate basename '-'  <component>-compname into refname.
           <component>-desc = get_data_desc( refname ).
-          <component>-value = get_comp_value( <component> ).
+          <component>-value = get_value( <component>-desc ).
         endloop.
 
       catch cx_root into ex.
         log( |get_components { ex->get_text( ) } | ).
     endtry.
-    sort components by visibility descending compname ascending.
+    if desc-metatype = cl_tpda_script_data_descr=>mt_object.
+      sort components by visibility compname ascending.
+    endif.
   endmethod.
 
 
@@ -386,51 +420,75 @@ class zcl_debug_obj_graph_factory implementation.
     logs = |{ logs }{ cl_abap_char_utilities=>cr_lf }{ entry }|.
   endmethod.
 
-
   method add_record_component.
-    data: id     type string,
-          partid type string.
+    data: id       type string,
+          partid   type string,
+          color    type string,
+          compname type string,
+          value    type string.
 
     id = component-desc-name .
 
     if component-desc-haschildren = abap_true.
       partid = component-compname.
+      value = get_value( component-desc ).
     else.
       partid = ''.
+      value =  component-value .
     endif.
+    compname = bold( component-compname ).
 
+    color = viscolor( component-visibility ).
     componentid = record->addcomponent(
       exporting
-        name        = component-compname
-        value       = component-value
+        name        = compname
+        value       = value
         escape      = abap_false
-        visibility  = component-visibility
+        bgcolor     = color
         partid      = partid ).
 
   endmethod.
 
-
-  method get_comp_value.
-
-    if    i_component-desc-istable       = abap_true
-       or i_component-desc-hascomponents = abap_true
-       or i_component-desc-isreference   = abap_true.
-      r_result = |<u>{ i_component-desc-valuetext }</u>|.
-    else.
-      r_result = i_component-desc-valuetext.
+  method get_head_label.
+    if    desc-istable       = abap_true
+       or desc-hascomponents = abap_true
+       or desc-isreference   = abap_true.
+      r_result = escapevalue( desc-typedesc-name ).
+      if desc-typedesc-local = abap_true.
+        r_result = italics( r_result ).
+      endif.
     endif.
+    if r_result is initial.
+      r_result = escapevalue( desc-valuetext ).
+    endif.
+  endmethod.
+
+  method get_value.
+    if    desc-istable       = abap_true
+       or desc-hascomponents = abap_true
+       or desc-isreference   = abap_true.
+      r_result = escapevalue( desc-typedesc-name ).
+      if desc-typedesc-local = abap_true.
+        r_result = italics( r_result ).
+      endif.
+      r_result = underline(  r_result ).
+      if r_result is initial.
+        r_result = escapevalue( desc-valuetext ).
+      endif.
+    endif.
+
+    if r_result is initial.
+      r_result = escapevalue( desc-valuetext ).
+    endif.
+
   endmethod.
 
   method decode_visibility.
     case acckind.
       when if_tpda_control=>ak_private.
-        r_result = zcl_abap_graph_node_record=>visprivate.
+        r_result =  c_private.
       when if_tpda_control=>ak_protected.
-        r_result  = zcl_abap_graph_node_record=>visprotected.
-      when if_tpda_control=>ak_public.
-        r_result  = zcl_abap_graph_node_record=>vispublic.
-      when others.
-        assert 1 = 1 + 1.
+        r_result  = c_protected.
     endcase.
   endmethod.
 
@@ -448,6 +506,119 @@ class zcl_debug_obj_graph_factory implementation.
 
     if node is bound.
       nodeid = node->id.
+    endif.
+
+  endmethod.
+
+
+  method decodetype.
+    data: base  type string,
+          extra type string.
+
+    td-local = abap_true.
+    td-name = typename.
+    find regex '^\\TYPE=(.+)' in typename submatches base.
+    if sy-subrc = 0.
+      if base(1) = '%'.
+        case desc-metatype.
+          when cl_tpda_control=>mt_tab.
+            base = 'table'.
+          when cl_tpda_control=>mt_struct.
+            base = 'structure'.
+          when cl_tpda_control=>mt_class.
+            base = 'class'.
+          when others.
+            base = 'type'.
+        endcase.
+        concatenate 'local ' base '' into base respecting blanks.
+      else.
+        td-local = abap_false.
+      endif.
+      td-name = base.
+      return.
+    endif.
+    find regex '^\\PROGRAM=[^\\]*\\CLASS=([^\\]+)' in typename submatches base.
+    if sy-subrc = 0.
+      td-name = base.
+      return.
+    endif.
+    find regex '^\\PROGRAM=[^\\]*\\CLASS=([^\\]+)' in typename submatches base.
+    if sy-subrc = 0.
+      td-name = base.
+      return.
+    endif.
+    find regex '^\\CLASS-POOL=([^\\]+)\\CLASS=([^\\]+)' in typename submatches base extra.
+    if sy-subrc = 0.
+      concatenate base extra into td-name separated by space.
+      return.
+    endif.
+  endmethod.
+
+
+  method viscolor.
+
+    case visibility.
+      when c_protected.
+        r_result = c_protected.
+      when c_private.
+        r_result = c_privatebg.
+    endcase.
+
+  endmethod.
+
+
+  method bold.
+    if base <> ''.
+      concatenate '<b>' base '</b>' into r_result.
+    endif.
+  endmethod.
+
+  method italics.
+    if base <> ''.
+      concatenate '<i>' base '</i>' into r_result.
+    endif.
+  endmethod.
+
+  method underline.
+    if base <> ''.
+      concatenate '<u>' base '</u>' into r_result.
+    endif.
+  endmethod.
+
+  method add_table_cell.
+    data: partid   type string,
+          value    type string,
+          linkedid type string.
+    log( |R{ desc-refname }_C{ compname }_L{ line } | ).
+    if desc-refname <> ''.
+      if compname = ''.
+        partid = |l{ line }|.
+      else.
+        partid = |l{ line }c{ compname }|.
+      endif.
+    else.
+      partid = ''.
+    endif.
+    if compname = ''.
+      compname = c_dummy.
+    endif.
+
+    value = get_value( desc ).
+
+    log( |R{ desc-refname }_C{ componentid }_V{ value } | ).
+
+    componentid = table->setcell(
+        columnid    = compname
+        row         = line
+        value       = value
+        escape      = abap_false
+        partid      = partid ).
+
+    if desc-refname <> '' and componentid <> '' .
+      linkedid = get_or_create_node( desc-refname ).
+      if linkedid <> ''.
+        table->linkto( destination = linkedid source = componentid ).
+      endif.
     endif.
 
   endmethod.
