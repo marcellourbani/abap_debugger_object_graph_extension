@@ -17,8 +17,15 @@ Tested on netweaver 7.5, not sure about older releases
 4.  select **View object as graph**
 
 The object graph will be shown in a new browser window (Example from http://zevolving.com/2012/01/iterator-design-pattern-to-access-linked-list/ )
-![image](https://user-images.githubusercontent.com/2453277/44873836-37ba6d00-ac91-11e8-9ea8-998b8dbb3d26.png)
 
-Based on [ABAP-Object-Visualizer](https://github.com/larshp/ABAP-Object-Visualizer)
+![image](https://user-images.githubusercontent.com/2453277/45267892-94c1da00-b46c-11e8-8759-411cb635c4d2.png)
 
-Uses [Graphviz-browser](https://github.com/marcellourbani/Graphviz-browser) to render the graph
+Another example from the excellent [Writing Testable Code for ABAP](https://open.sap.com/courses/wtc1) opensap course
+![image](https://user-images.githubusercontent.com/2453277/45267904-ed917280-b46c-11e8-8c6c-d57bd72083fa.png)
+
+Based on [ABAP Graph](https://github.com/marcellourbani/abapgraph)
+
+Originally inspired by
+[ABAP-Object-Visualizer](https://github.com/larshp/ABAP-Object-Visualizer)
+
+Uses [Graphviz-browser](https://github.com/marcellourbani/Graphviz-browser) to render the graph in a browser window
