@@ -4,7 +4,7 @@ ABAP debugger extension to visualize objects as graphs via [graphviz](http://www
 
 ### Installation
 
-Install via [abapGit](https://github.com/larshp/abapGit)
+The prerequisite [ABAP Graph](https://github.com/marcellourbani/abapgraph) needs to be installed first, then install via [abapGit](https://github.com/larshp/abapGit)
 
 Tested on netweaver 7.5, not sure about older releases
 
@@ -22,8 +22,6 @@ The object graph will be shown in a new browser window (Example from http://zevo
 
 Another example from the excellent [Writing Testable Code for ABAP](https://open.sap.com/courses/wtc1) opensap course
 ![image](https://user-images.githubusercontent.com/2453277/45267904-ed917280-b46c-11e8-8c6c-d57bd72083fa.png)
-
-Based on [ABAP Graph](https://github.com/marcellourbani/abapgraph)
 
 Originally inspired by
 [ABAP-Object-Visualizer](https://github.com/larshp/ABAP-Object-Visualizer)
